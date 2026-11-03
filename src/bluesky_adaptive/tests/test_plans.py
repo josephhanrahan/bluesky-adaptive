@@ -13,7 +13,7 @@ from bluesky_adaptive.plans import (
     default_acquire,
     optimize,
     optimize_in_run,
-    optimize_step,
+    default_optimize_step,
 )
 from bluesky_adaptive.protocols import (
     AcquisitionPlan,
@@ -292,7 +292,7 @@ def test_evaluation_failure_registers_suggestions(RE):
     )
 
     with pytest.raises(RuntimeError, match="evaluation failed"):
-        RE(optimize_step(optimization_problem))
+        RE(default_optimize_step(optimization_problem))
 
     optimizer.register_failures.assert_called_once_with(suggestions)
     optimizer.ingest.assert_not_called()
@@ -736,7 +736,7 @@ def test_optimize_step_rejects_suggestion_without_id(RE):
     )
 
     with pytest.raises(ValueError, match="All suggestions must contain an '_id' key"):
-        RE(optimize_step(optimization_problem))
+        RE(default_optimize_step(optimization_problem))
 
     evaluation_function.assert_not_called()
     optimizer.ingest.assert_not_called()
@@ -776,7 +776,7 @@ def test_optimize_step_rejects_invalid_outcome_ids(RE, outcomes, error_type, mes
     )
 
     with pytest.raises(error_type, match=message):
-        RE(optimize_step(optimization_problem, n_points=2))
+        RE(default_optimize_step(optimization_problem, n_points=2))
 
     evaluation_function.assert_called_once()
     optimizer.ingest.assert_not_called()
@@ -831,7 +831,7 @@ def test_optimize_step_default(RE):
         evaluation_function=evaluation_function,
     )
 
-    RE(optimize_step(optimization_problem))
+    RE(default_optimize_step(optimization_problem))
 
     optimizer.suggest.assert_called_once_with(1)
     optimizer.ingest.assert_called_once_with([{"objective": 0.0, "_id": 0}])
@@ -999,7 +999,7 @@ def test_optimize_step_custom_acquisition_plan(RE):
         acquisition_plan=acquisition_plan,
     )
 
-    RE(optimize_step(optimization_problem))
+    RE(default_optimize_step(optimization_problem))
     optimizer.suggest.assert_called_once_with(1)
     acquisition_plan.assert_called_once_with(
         [{"x1": 0.0, "_id": 0}],

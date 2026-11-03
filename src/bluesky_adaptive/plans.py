@@ -21,6 +21,7 @@ from .protocols import (
     SupportsStoppingCriteria,
     TrialFaultAware,
     TUid,
+    OptimizeStep
 )
 from .utils import (
     InferredReadable,
@@ -126,7 +127,7 @@ def default_acquire(
 
 
 @plan
-def optimize_step(
+def default_optimize_step(
     optimization_problem: OptimizationProblem[TUid],
     n_points: int = 1,
     *args: Any,
@@ -176,6 +177,7 @@ def optimize(
     n_points: int = 1,
     checkpoint_interval: int | None = None,
     readable_cache: dict[str, InferredReadable] | None = None,
+    optimize_step: OptimizeStep | None = None,
     **kwargs: Any,
 ) -> MsgGenerator[None]:
     """
@@ -220,6 +222,10 @@ def optimize(
     # Cache to track readables created from suggestions and outcomes
     readable_cache = readable_cache or {}
 
+    _step: OptimizeStep = (
+        default_optimize_step if optimize_step is None else optimize_step
+    )
+
     _md = collect_optimization_metadata(optimization_problem)
     _md.update(
         {
@@ -238,7 +244,7 @@ def optimize(
         iteration_indices = count() if iterations is None else range(iterations)
         for i in iteration_indices:
             # Perform a single step of the optimization
-            uid, suggestions, outcomes = yield from optimize_step(optimization_problem, n_points, **kwargs)
+            uid, suggestions, outcomes = yield from _step(optimization_problem, n_points, **kwargs)
 
             if isinstance(optimizer, SupportsStoppingCriteria):
                 stop_now, stop_reason = optimizer.should_stop()

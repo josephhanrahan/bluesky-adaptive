@@ -392,3 +392,13 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
     """
 
     acquisition_plan_kwargs: Mapping[str, Any] | None = None
+
+@runtime_checkable
+class OptimizeStep(Protocol[_TUid_co]):
+    def __call__(
+        self,
+        optimization_problem: OptimizationProblem,
+        n_points: int = 1,
+        **kwargs: Any,
+    ) -> MsgGenerator[tuple[_TUid_co, Sequence[Mapping], Sequence[Mapping]]]:
+        ...
